@@ -1,10 +1,12 @@
+from io import BytesIO
 import os
+from typing import Union
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 import pandas as pd
 from functools import lru_cache
-
-from persistence import load_file_to_df
+import streamlit as st
+from persistence import load_file_to_df, load_filebytes_to_df
 from dotenv import load_dotenv
 
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
@@ -32,15 +34,17 @@ dataframe = None
 agent = None
 
 
-@lru_cache(maxsize=1)
-def get_data(filepath: str) -> pd.DataFrame:
+# @lru_cache(maxsize=1)
+def get_data(params) -> pd.DataFrame:
     global dataframe
     if dataframe is None:
-        dataframe = load_file_to_df(filepath)  # Load your DataFrame here
+        dataframe = load_filebytes_to_df(params)
+        print(f"{dataframe=}")
     return dataframe
 
 
 def get_current_df():
+    dataframe = st.session_state.dataset
     if dataframe is None:
         raise RuntimeError("No dataset to work with for analysis")
     return dataframe
@@ -48,6 +52,7 @@ def get_current_df():
 
 def initialize_agent() -> None:
     global agent
+    dataframe = get_current_df()
     if dataframe is not None:
         print(f"Reinitialized agent with {dataframe=}")
         agent = create_pandas_dataframe_agent(
@@ -60,7 +65,7 @@ def initialize_agent() -> None:
             early_stopping_method="force",
             max_iterations=30,
             suffix=suffix_template,
-            prefix="Go through the data head  to be able to get the  right key for the dataset",
+            prefix="Go through the data head to be able to get the  right key for the dataset",
         )
         print(f"{agent=}")
     else:

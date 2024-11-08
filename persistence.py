@@ -91,3 +91,19 @@ def load_file_to_df(filepath: str) -> pd.DataFrame:
         raise Exception(
             f"Unsupported file type '{file_extension}'. Please upload a .csv or .xlsx file."
         )
+
+
+def load_filebytes_to_df(uploaded_file):
+    file_extension = uploaded_file.type
+    if file_extension == "text/csv":
+        df = pd.read_csv(uploaded_file)
+    elif file_extension in [
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-excel",
+    ]:
+        df = pd.read_excel(uploaded_file)
+    else:
+        raise Exception(
+            f"Unsupported file type '{file_extension}'. Please upload a .csv or .xlsx file."
+        )
+    return df
