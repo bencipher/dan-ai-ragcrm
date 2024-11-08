@@ -10,12 +10,6 @@ load_dotenv()
 logger = logging.basicConfig(level=logging.INFO)
 
 
-def get_uploaded_data():
-    # query the db for data or maybe the memory, something like that.
-
-    return "data"
-
-
 def get_table_name(filepath: str) -> str:
     return os.path.splitext(os.path.basename(filepath))[0]
 
@@ -43,33 +37,57 @@ def save_to_db(df: pd.DataFrame, filepath: str) -> bool:
     return False
 
 
-def load_excel_to_df(filepath):
-    # Load the Excel file
+def load_csv_df(filepath: str) -> pd.DataFrame:
+    """Load a CSV file into a DataFrame."""
     try:
-        excel_file = pd.ExcelFile(filepath)
-        sheets = excel_file.sheet_names
-
-        # Check if the workbook has only one sheet
-        if len(sheets) > 1:
-            # Create an empty list to hold DataFrames for multiple sheets
-            df_list = []
-
-            # Loop through the sheets, load them into DataFrames, and append to the list
-            for sheet in sheets:
-                try:
-                    df = pd.read_excel(filepath, sheet_name=sheet)
-                    df["Source_Sheet"] = (
-                        sheet  # Optional: Add a column to identify the sheet
-                    )
-                    df_list.append(df)  # Append the DataFrame to the list
-
-                except Exception as e:
-                    print(f"Error reading sheet {sheet}: {e}")
-
-            # Concatenate all DataFrames, handling different shapes
-            combined_df = pd.concat(df_list, ignore_index=True, sort=False)
-            return combined_df
-        return pd.read_excel(filepath, sheet_name=sheets[0])
+        df = pd.read_csv(filepath)
+        return df
     except Exception as e:
-        print(f"Error loading Excel file: {e}")
-        return None
+        raise Exception(f"Error loading CSV file '{filepath}': {e}")
+
+
+def load_excel_df(filepath: str) -> pd.DataFrame:
+    """Load an Excel file into a DataFrame."""
+    try:
+        with pd.ExcelFile(filepath) as excel_file:  # Use context manager
+            sheets = excel_file.sheet_names
+
+            # Check if the workbook has only one sheet
+            if len(sheets) > 1:
+                # Create an empty list to hold DataFrames for multiple sheets
+                df_list = []
+
+                # Loop through the sheets, load them into DataFrames, and append to the list
+                for sheet in sheets:
+                    try:
+                        df = pd.read_excel(
+                            excel_file, sheet_name=sheet
+                        )  # Read each sheet
+                        df["Source_Sheet"] = (
+                            sheet  # Optional: Add a column to identify the sheet
+                        )
+                        df_list.append(df)  # Append the DataFrame to the list
+                    except Exception as e:
+                        print(f"Error reading sheet '{sheet}': {e}")
+
+                # Concatenate all DataFrames, handling different shapes
+                combined_df = pd.concat(df_list, ignore_index=True, sort=False)
+                return combined_df
+
+            # If there's only one sheet, read it directly
+            return pd.read_excel(excel_file, sheet_name=sheets[0])
+    except Exception as e:
+        raise Exception(f"Error loading Excel file '{filepath}': {e}")
+
+
+def load_file_to_df(filepath: str) -> pd.DataFrame:
+    """Load a file into a DataFrame based on its extension."""
+    _, file_extension = os.path.splitext(filepath)  # Get the file extension
+    if file_extension.lower() == ".csv":
+        return load_csv_df(filepath)  # Load CSV file
+    elif file_extension.lower() in [".xls", ".xlsx"]:
+        return load_excel_df(filepath)  # Load Excel file
+    else:
+        raise Exception(
+            f"Unsupported file type '{file_extension}'. Please upload a .csv or .xlsx file."
+        )

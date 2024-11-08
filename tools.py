@@ -1,53 +1,9 @@
 from typing import Union, List
 from langchain.tools import StructuredTool
-from config import llm, df_data_mine
-from agents import global_agent as agent
+from config import llm, get_current_agent, get_current_df
 from models import EmailModel, KPIModel, Task, TaskList
 from langchain_core.tools import Tool
 from prompt import markdown_prompt, task_prompt, kpi_prompt, email_prompt
-
-dataframe = df_data_mine
-
-
-def data_analysis_tool():
-    """
-    This tool gets a clearly defined question or list of questions, and performs analysis to answer those objectives using the underlying dataset
-    """
-
-    def get_insights(query: Union[str, List[str]]) -> str:
-        print(f"{query=}")
-        # json_agent = get_json_agent("./inventory_prices_dict.json")
-        report = []
-        result = ""
-
-        if isinstance(query, list):
-            for q in query:
-                response = agent.invoke(q)
-                result = response.get("output", response.get("result", ""))
-                report.append(result)
-        else:
-            response = agent.invoke(query)
-            result = response.get("output", response.get("result", ""))
-            report.append(result)
-        return report
-
-    data_tool = StructuredTool.from_function(
-        func=get_insights,
-        name="analyze_single_metric",
-        description="""
-            This tool is optimized for specific metric-based insights or KPI analysis.
-            Do not use it for vague or broad questions like tell me about the dataset.
-            Use when user have single or multiple questions coming from the KPI tool about specific key performance indicators (KPIs) or particular aspects
-            of the dataset—like sales trends, customer satisfaction, or financial ratios—this tool identifies
-            relevant metrics and provides detailed insights.
-
-            Best suited for queries such as:
-                - "Analyze customer retention KPIs."
-                - "What are the trends in monthly revenue?"
-            """,
-    )
-
-    return data_tool
 
 
 def generate_kpi_questions(context: str) -> List[str]:
@@ -66,7 +22,7 @@ def generate_kpi_questions(context: str) -> List[str]:
             - **KPIs:** Revenue, Growth Rate
             - **Questions:** What is the total revenue? How has sales changed over time?
     """
-
+    dataframe = get_current_df()
     chain = kpi_prompt | llm.with_structured_output(KPIModel)
     output = chain.invoke({"query": context, "dataframe_summary": dataframe})
 
@@ -146,13 +102,16 @@ def generate_markdown_report(user_question, kpi_breakdown, rough_analysis):
 def get_insights(query: Union[str, List[str]]) -> str:
     report = []
     result = ""
+
+    agent = get_current_agent()
+    print(f"Inside Get Insights\n{agent=}")
     if isinstance(query, list):
         for q in query:
-            response = agent.invoke(q)
+            response = agent.invoke({"input": q})
             result = response.get("output", response.get("result", ""))
             report.append(result)
     else:
-        response = agent.invoke(query)
+        response = agent.invoke({"input": query})
         result = response.get("output", response.get("result", ""))
         report.append(result)
     return report
@@ -160,8 +119,11 @@ def get_insights(query: Union[str, List[str]]) -> str:
 
 def complex_analysis(query: str) -> str:
     kpi_questions = generate_kpi_questions(query)
+    print(f"{kpi_questions=}")
+    print()
     analysis_result = get_insights(kpi_questions)
-    print(analysis_result)
+    print(f"{analysis_result=}")
+    print()
     report = generate_markdown_report(query, kpi_questions, analysis_result)
     return report
 
