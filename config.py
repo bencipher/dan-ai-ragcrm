@@ -39,7 +39,6 @@ def get_data(params) -> pd.DataFrame:
     global dataframe
     if dataframe is None:
         dataframe = load_filebytes_to_df(params)
-        print(f"{dataframe=}")
     return dataframe
 
 
@@ -54,7 +53,6 @@ def initialize_agent() -> None:
     global agent
     dataframe = get_current_df()
     if dataframe is not None:
-        print(f"Reinitialized agent with {dataframe=}")
         agent = create_pandas_dataframe_agent(
             llm,
             df=dataframe,  # Use the loaded DataFrame
@@ -81,14 +79,5 @@ def get_current_agent():
         )
     return agent
 
-
-# YOU HIGH COMPONENT
-light_theme = {
-    "palette": {"background": {"default": "#d580ff"}, "primary": {"main": "#ffffff"}}
-}
-
-dark_theme = {
-    "palette": {"background": {"default": "#471061"}, "primary": {"main": "#000000"}}
-}
 
 # dataframe = None

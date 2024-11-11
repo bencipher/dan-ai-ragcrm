@@ -1,4 +1,3 @@
-# @lru.cache
 import logging
 import os
 import sqlite3
@@ -82,11 +81,11 @@ def load_excel_df(filepath: str) -> pd.DataFrame:
 
 def load_file_to_df(filepath: str) -> pd.DataFrame:
     """Load a file into a DataFrame based on its extension."""
-    _, file_extension = os.path.splitext(filepath)  # Get the file extension
+    _, file_extension = os.path.splitext(filepath)
     if file_extension.lower() == ".csv":
-        return load_csv_df(filepath)  # Load CSV file
+        return load_csv_df(filepath)
     elif file_extension.lower() in [".xls", ".xlsx"]:
-        return load_excel_df(filepath)  # Load Excel file
+        return load_excel_df(filepath)
     else:
         raise Exception(
             f"Unsupported file type '{file_extension}'. Please upload a .csv or .xlsx file."
