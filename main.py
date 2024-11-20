@@ -76,11 +76,8 @@ if uploaded_file:
     st.session_state.dataset = load_data(uploaded_file)
     initialize_agent()
     st.session_state.uploaded_data = True
-    st.session_state.conversation.append(
-        {
-            "role": "assistant",
-            "content": "Now that you have uploaded your data, let's chat about your data, do you have any question!",
-        }
+    st.chat_message("assistant").write(
+        "Now that you have uploaded your data, let's chat about your data, do you have any question!"
     )
 
 
