@@ -65,12 +65,7 @@ uploaded_file = st.file_uploader(
 if "conversation" not in st.session_state or st.sidebar.button(
     "Clear conversation history"
 ):
-    st.session_state.conversation = [
-        {
-            "role": "assistant",
-            "content": "Hi! I am your AI assistant, upload your data and let me analyze it for you",
-        },
-    ]
+    st.session_state.conversation = []
 if "uploaded_data" not in st.session_state:
     st.session_state.uploaded_data = False
 if "dataset" not in st.session_state:
@@ -81,7 +76,6 @@ if uploaded_file:
     st.session_state.dataset = load_data(uploaded_file)
     initialize_agent()
     st.session_state.uploaded_data = True
-    print(f"{st.session_state.conversation=}")
     st.session_state.conversation.append(
         {
             "role": "assistant",
@@ -106,14 +100,11 @@ if prompt := st.chat_input(
     placeholder="What is this data about?", disabled=not st.session_state.uploaded_data
 ):
     st.session_state.conversation.append({"role": "user", "content": prompt})
-    st.chat_message("user").write(prompt)
+    # st.chat_message("user").write(prompt)
     with st.chat_message("assistant"):
         st_cb = StreamlitCallbackHandler(st.container(), expand_new_thoughts=False)
         response = chat_with_agent(st.session_state.conversation)
-        # response = pandas_df_agent.run(st.session_state.messages, callbacks=[st_cb])
         st.session_state.conversation.append({"role": "assistant", "content": response})
-        st.write(response)
 
-pprint.pprint(st.session_state.conversation)
 for msg in st.session_state.conversation:
     st.chat_message(msg["role"]).write(msg["content"])
