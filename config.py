@@ -1,27 +1,43 @@
-from io import BytesIO
 import os
-from typing import Union
+import pandas as pd
+import streamlit as st
+from functools import lru_cache
+
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-import pandas as pd
-from functools import lru_cache
-import streamlit as st
-from persistence import load_file_to_df, load_filebytes_to_df
+from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 from dotenv import load_dotenv
 
-from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
+from persistence import load_filebytes_to_df
 from templates import suffix_template
 
 load_dotenv()
 
 
-llm = ChatOpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-    temperature=0,
-    model="gpt-4o-mini",
-    streaming=True,
-)
+model = os.environ.get("MODEL", "DEFAULT")
 
+if model.upper() == "OPENAI":
+    llm = ChatOpenAI(
+        temperature=0,
+        model="gpt-4o-mini",
+        streaming=True,
+    )
+elif model.upper() == "GEMINI":
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-1.5-pro",
+        temperature=0,
+        max_retries=3,
+    )
+else:
+    llm = ChatGroq(
+        model="gemma2-9b-it",
+        temperature=0,
+        max_retries=3,
+        streaming=True,
+    )
+print(f"{model=} - {llm=}")
 memory = ConversationBufferMemory(
     memory_key="chat_history_summary",
     llm=llm,
