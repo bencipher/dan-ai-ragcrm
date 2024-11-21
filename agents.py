@@ -27,5 +27,9 @@ supervisor_agent = (
 )
 
 executor = AgentExecutor(
-    agent=supervisor_agent, tools=tools, verbose=True, memory=memory
+    agent=supervisor_agent,
+    tools=tools,
+    verbose=True,
+    memory=memory,
+    handle_parsing_errors=True,
 )
